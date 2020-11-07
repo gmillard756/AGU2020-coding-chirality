@@ -1,0 +1,101 @@
+---
+title: "Playing with lesson 2-py"
+author: "Geoffrey Millard"
+date: "November 4, 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(reticulate)
+py_discover_config()
+use_python('C:/Users/gmill/AppData/Local/r-miniconda/envs/r-reticulate/python.exe')
+```
+
+```{r set up workspace, warning=F, message=FALSE}
+library(tidyverse)
+
+#USGS and EPA dataset retrieval package
+library(dataRetrieval) 
+#click on "Packages" tab to see functions available in the dataRetrival package
+
+#these are the USGS sites upstream from Honnedaga Lake, NY that we found in the browser
+sites <- c('0134277112', '0134277114')
+
+#detailed location information about the site
+# readNWISsite(c('0134277112', '0134277114'))
+
+#whatNWISdata displays the datasets available at each site
+available <- whatNWISdata(siteNumber=c('0134277112', '0134277114'))
+actual <- readNWISpCode(parameterCd = available$parm_cd) #interpret parameter codes
+want <- c('00681', '00945', '50287', '50285') #we want: DOC, DSO4, DHg and DMeHg, 0060 is discharge
+data <- readNWISqw(siteNumbers = sites, parameterCd=want) #get the data
+codes <- readNWISpCode(parameterCd = unique(data$parm_cd)) #confirms that we got what we wanted, shows UNITS!
+View(data)
+```
+
+In Terminal
+$ pip install dataretrieval
+
+```{r}
+library(reticulate)
+py_discover_config()
+use_python('C:/Users/gmill/AppData/Local/r-miniconda/envs/r-reticulate/python.exe')
+# conda_create(envname = 'AGU2020', packages = c('SciPy', dataretrieval))
+# conda_install(envname = 'AGU2020', packages = c('nwis', '-e'))
+# py_install('dataretrieval', envname = 'AGU2020')
+use_condaenv('AGU2020')
+
+virtualenv_install(envname = 'AGU2020', packages = c('matplotlib', 'dataretrieval', 'SciPy'))
+
+virtualenv_list()
+use_virtualenv('AGU2020')
+
+```
+
+
+```{python}
+import matplotlib.pyplot as plt
+import pandas as pd
+import dataretrieval.nwis as nwis
+
+# get data from NWIS
+site = '0134277112'
+
+df12 = nwis.get_record( sites='0134277112', start='2011-05-16', end='2019-10-08', parameterCd=r.want, service='qwdata')
+
+df14 = nwis.get_record( sites='0134277114', start='2011-05-16', end='2019-10-08', parameterCd=r.want, service='qwdata')
+
+print(df12.dtypes)
+# show variable metadata
+for var_name in df12.data_vars:
+    print(df12[var_name].attrs)
+
+
+# plot discharge data
+dataset12['00060'].plot(figsize=(12,7))
+plt.ylabel('{} ({})'.format(dataset12['00060'].variable_name,dataset12['00060'].variable_unit))
+plt.title('Discharge Observation at USGS Gage 03339000')
+```
+
+experimenting with example data
+
+```{python}
+# get instantaneous values (iv)
+df = nwis.get_record(sites=site, service='iv', start='2017-12-31', end='2018-01-01')
+
+# get water quality samples (qwdata)
+df2 = nwis.get_record(sites='03339000', service='qwdata', start='2017-12-31', end='2018-01-01')
+
+# get basic info about the site
+df3 = nwis.get_record(sites=site, service='site')
+```
+
+
+
+
+```{r}
+view(py$df2)
+tail(actual)
+```
+
