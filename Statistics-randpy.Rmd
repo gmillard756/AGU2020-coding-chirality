@@ -1,0 +1,58 @@
+---
+title: "Statistics-randpy"
+author: "Geoffrey Millard"
+date: "11/13/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## What do we know?
+
+Two sites and four parameters.  How can we quickly generate some summary statistics?
+Piping!
+
+```{r meaningful parameters}
+#first we need to name the parameter codes, so that we don't forget which code is which
+data1 <- data %>% mutate(Analyte = recode(parm_cd, 
+                         '00681'= "DOC", 
+                         '00945' = "SO4", 
+                         '50287' = "Hg", 
+                         '50285' = "MeHg"))
+
+data1 <- data1 %>% mutate(Site = recode(site_no, 
+                         '0134277112' = "Reference", 
+                         '0134277114' = "Treated"))
+
+
+#summary stats
+data1 %>% group_by(Site, Analyte) %>% summarize(average=mean(result_va, na.rm = T))
+
+```
+
+Update these parameters in py
+
+```{python}
+import pandas as pd
+import numpy as np
+
+df12a=r.df12a
+
+
+conditions = [
+(df12a['parm_cd']==681),
+(df12a['parm_cd']==945),
+(df12a['parm_cd']==50287),
+(df12a['parm_cd']==50285)
+]
+
+values = ['DOC', 'SO4', 'Hg', 'MeHg']
+df12a['Par'] = np.select(conditions, values)
+```
+
+```{r}
+view(py$df12a)
+```
+
