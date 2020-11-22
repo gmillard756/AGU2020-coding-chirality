@@ -98,14 +98,14 @@ df12b = nwis.get_qwdata(datetime_index = 'TRUE', site_no=site)
 df14['00060_Mean'].plot(figsize=(12,7))
 plt.ylabel('{} ({})'.format('Discharge','CFS'))
 plt.xlabel('Date')
-plt.title('Discharge Observation at USGS Gage 03339000')
+plt.title('Discharge Observation at USGS Gage 0134277114')
 plt.show()
 ```
 
 ```{r}
 NWIS <- reticulate::import('dataretrieval.nwis')
 df12 <- NWIS$get_qwdata(datetime_index = T, site_no=py$site[1], parameterCd=want)
-NWIS$get_record(sites = py$site[1], service = 'qwdata')
+df12qw <- NWIS$get_record(sites = py$site[1], service = 'qwdata')
 ```
 
 
