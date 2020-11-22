@@ -5,28 +5,31 @@ date: "November 4, 2020"
 output: html_document
 ---
 
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(reticulate)
+pltr <- import('matplotlib')
+pltr$use("Agg", force = TRUE)
 py_discover_config()
 use_python('C:/Users/gmill/AppData/Local/r-miniconda/envs/r-reticulate/python.exe')
-virtualenv_install(envname = 'AGU2020', packages = c('matplotlib', 'dataretrieval', 'SciPy'))
-virtualenv_python()
-virtualenv_list()
-use_virtualenv('AGU2020')
+# virtualenv_install(envname = 'AGU2020', packages = c('matplotlib', 'dataretrieval', 'SciPy'))
+# virtualenv_python()
+# virtualenv_list()
+# use_virtualenv('AGU2020')
 
-conda_list()
-conda_python()
+# conda_list()
+# conda_python()
+# 
+# miniconda_path()
 
-miniconda_path()
-
-conda_install(envname = 'AGU2020', packages = 'git')
-conda_install(envname = 'AGU2020', packages = 'pip')
-conda_install(envname = 'AGU2020', packages = 'dataretrieval', url = 'git+git://github.com/USGS-python/dataretrieval.git')
+# conda_install(envname = 'AGU2020', packages = 'git')
+# conda_install(envname = 'AGU2020', packages = 'pip')
+# conda_install(envname = 'AGU2020', packages = 'dataretrieval', url = 'git+git://github.com/USGS-python/dataretrieval.git')
 use_condaenv(condaenv = 'AGU2020')
 
 
-conda_install(envname = 'AGU2020a', packages = c('r-tidyverse', 'r-kableExtra', 'SciPy', 'NumPy', 'matplotlib', 'dataretrieval', 'r-dataRetrieval'), channel = 'local', 'C:/Users/gmill/Documents/R/win-library/3.6')
+# conda_install(envname = 'AGU2020a', packages = c('r-tidyverse', 'r-kableExtra', 'SciPy', 'NumPy', 'matplotlib', 'dataretrieval', 'r-dataRetrieval'), channel = 'local', 'C:/Users/gmill/Documents/R/win-library/3.6')
 
 ```
 
@@ -48,8 +51,26 @@ available <- whatNWISdata(siteNumber=c('0134277112', '0134277114'))
 actual <- readNWISpCode(parameterCd = available$parm_cd) #interpret parameter codes
 want <- c('00681', '00945', '50287', '50285') #we want: DOC, DSO4, DHg and DMeHg, 0060 is discharge
 data <- readNWISqw(siteNumbers = sites, parameterCd=want) #get the data
+Q <- readNWISdv(siteNumbers = sites, parameterCd='00060')
 codes <- readNWISpCode(parameterCd = unique(data$parm_cd)) #confirms that we got what we wanted, shows UNITS!
 View(data)
+
+data[data$parm_cd=='00681',] %>% 
+  ggplot(aes(x=sample_dt, y=result_va))+
+  geom_point()+
+  labs(x='Date', y='DOC')+
+  theme_bw()
+
+Q %>% ggplot(aes(x=Date, y=X_00060_00003, color=site_no))+
+  geom_line()+
+  labs(x='Date', y='Q (CFS)', color='Site')+
+  theme_bw()
+
+plot(x=Q$Date[Q$site_no==Q$site_no[1]], y=Q$X_00060_00003[Q$site_no==Q$site_no[1]], xlab = 'Date', ylab='Q (CFS)', type = 'l', col='red')
+lines(x=Q$Date[Q$site_no==Q$site_no[2]], y=Q$X_00060_00003[Q$site_no==Q$site_no[2]], xlab = 'Date', ylab='Q (CFS)', type = 'l', col=1)
+
+
+  
 ```
 
 In Terminal
@@ -65,31 +86,26 @@ import dataretrieval.nwis as nwis
 # get data from NWIS
 site = '0134277112', '0134277114'
 
-df12 = nwis.get_record( sites=site,  start='2011-05-16', end='2019-10-08', service='qwdata')
+df12 = nwis.get_record( sites=site[0],  start='2011-05-16', end='2019-10-08', service='qwdata')
 
-df14 = nwis.get_data( sites=site, start='2011-05-16', end='2019-10-08', service='dv')
+df14 = nwis.get_record( sites=site[1], start='2011-05-16', end='2019-10-08', service='dv')
 
 df12b = nwis.get_qwdata(datetime_index = 'TRUE', site_no=site)
 
-print(df12.dtypes)
-# show variable metadata
-for var_name in df12.data_vars:
-    print(df12[var_name].attrs)
-
 
 # plot discharge data
-dataset12['00060'].plot(figsize=(12,7))
-plt.ylabel('{} ({})'.format(dataset12['00060'].variable_name,dataset12['00060'].variable_unit))
+
+df14['00060_Mean'].plot(figsize=(12,7))
+plt.ylabel('{} ({})'.format('Discharge','CFS'))
+plt.xlabel('Date')
 plt.title('Discharge Observation at USGS Gage 03339000')
+plt.show()
 ```
 
 ```{r}
 NWIS <- reticulate::import('dataretrieval.nwis')
-df12 <- NWIS$get_qwdata(datetime_index = T, site_no=py$site[1], parameterCd=want[1])
+df12 <- NWIS$get_qwdata(datetime_index = T, site_no=py$site[1], parameterCd=want)
 NWIS$get_record(sites = py$site[1], service = 'qwdata')
-want2 <- c(681, 945, 50287, 50285)
-df12a <- df12[df12$parm_cd %in% want2,]
-df12a[df12a$parm_cd==50287,]
 ```
 
 
@@ -97,7 +113,7 @@ experimenting with example data
 
 
 ```{r look at python import}
-view(py$df12)
+view(py$df14)
 tail(actual)
 ```
 
