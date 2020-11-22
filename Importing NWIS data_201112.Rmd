@@ -121,10 +121,11 @@ tail(actual)
 bysite=r.data.groupby(['site_no', 'parm_cd'])
 summ=bysite['result_va'].describe()
 summ
-summ.columns=summ.columns.map('.'.join)
 summ.to_csv('pysumm.csv', index=False)
 print(summ.to_markdown)
 ```
+
+Function needed to visualize pandas.describe() output with multiple grouping parameters
 
 ```{r}
 library(DT)
