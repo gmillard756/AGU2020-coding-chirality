@@ -29,7 +29,7 @@ use_python('C:/Users/gmill/AppData/Local/r-miniconda/envs/r-reticulate/python.ex
 use_condaenv(condaenv = 'AGU2020')
 
 
-# conda_install(envname = 'AGU2020a', packages = c('r-tidyverse', 'r-kableExtra', 'SciPy', 'NumPy', 'matplotlib', 'dataretrieval', 'r-dataRetrieval'), channel = 'local', 'C:/Users/gmill/Documents/R/win-library/3.6')
+# conda_install(envname = 'AGU2020', packages = c('SciPy', 'NumPy', 'matplotlib', 'dataretrieval', 'IPython', 'rpy2'))
 
 ```
 
@@ -77,7 +77,7 @@ In Terminal
 $ pip install dataretrieval
 
 
-```{python python NWIS import}
+```{python, python NWIS import}
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -115,5 +115,51 @@ experimenting with example data
 ```{r look at python import}
 view(py$df14)
 tail(actual)
+```
+
+```{python, results='asis'}
+bysite=r.data.groupby(['site_no', 'parm_cd'])
+summ=bysite['result_va'].describe()
+summ
+summ.columns=summ.columns.map('.'.join)
+summ.to_csv('pysumm.csv', index=False)
+print(summ.to_markdown)
+```
+
+```{r}
+library(DT)
+
+PyDisplayDf <- function(dataframe) {
+    dt <- DT::datatable(dataframe, 
+                  options = list(lengthChange = FALSE, 
+                  sDom  = '<"top">lrt<"bottom">ip', 
+                  paging = FALSE))
+    dt
+}
+
+read.csv('pysumm.csv')
+pd <- import('pandas')
+
+DT::datatable(py$summ)
+
+```
+
+```{python}
+
+from IPython.display import display
+
+import rpy2.rinterface as rinterface
+rinterface.initr()
+
+from rpy2.robjects import pandas2ri
+pandas2ri.activate()
+
+import rpy2.robjects as robjects
+
+r = robjects.r
+pydisplaydf = r.source('pydisplaydf.r')[0]
+
+display(pydisplaydf(summ))
+
 ```
 
