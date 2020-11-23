@@ -186,12 +186,44 @@ display(pydisplaydf(summ))
 
 ###R 
 
+There is no py-describe() equivalent, however the functionality of selecting what you want summarized does exist within r-tidyverse::dplyr
+
 ```{r}
 rsum <- data %>% group_by(site_no, parm_cd) %>% summarize(mean=mean(result_va, na.rm=T), std=sd(result_va, na.rm=T), max=max(result_va, na.rm=T), min=min(result_va, na.rm=T), n=n())
 
 
 rsum %>% kable %>% kable_styling(bootstrap_options = c('striped', 'hover', 'responsive'))
+```
 
+we can also use the Kable approach with our py-summary tables for more flexibility.
+
+```{r}
 py$summ2 %>% kable %>% kable_styling(bootstrap_options = c('striped', 'hover', 'responsive'))
+```
+
+we can do this with a python data frame as well, we just need to make sure any index is stored in a column first
+
+```{python}
+df12b = df12.reset_index
+```
+
+And we can summarize differently because of the difference in shape, or we could reshape.
+
+```{r}
+lubridate::month(py$df12b$datetime)
+
+rsum <- py$df12b %>% 
+  group_by(lubridate::month(datetime)) %>% 
+  summarise(across(starts_with('p'), ~mean(.x, na.rm=T)))
+rsum 
+
+rsum <- py$df12b %>% 
+  group_by(lubridate::year(datetime),lubridate::month(datetime)) %>% 
+  select(p00681, p00945, p50287, p50285) %>% 
+  summarise(across(everything(), list(mean=~mean(.x, na.rm=T), std=~sd(.x, na.rm=T), n=~n()), .names = "{.col}.{.fn}"))
+rsum
+
+
+rsum %>% kable %>% kable_styling(bootstrap_options = c('striped', 'hover', 'responsive'))
 ```
 
