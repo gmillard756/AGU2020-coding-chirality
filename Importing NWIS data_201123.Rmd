@@ -145,8 +145,9 @@ bysite=r.data.groupby(['site_no', 'parm_cd'])
 summ=bysite['result_va'].describe()
 summ
 # summ.to_csv('pysumm.csv', index=False) export to csv doesn't work
-print(summ.to_markdown)
+summ.to_html()
 
+summ.to_markdown() # need to pip/conda install tabulate package to use
 ```
 
 In Jupityr notebook, this looks really good, but not if we are using R.  It also isn't very helpful for getting into R, because the index values get dropped.  One more line of of code will convert the index variables into column data.
@@ -185,7 +186,7 @@ The best way to visualize output is with the R-DT package
 library(DT)
 
 DT::datatable(py$summ)
-# DT::datatable(py$summ2)
+DT::datatable(py$summ2)
 # DT::datatable(py$summ4)
 # DT::datatable(py$summ6)
 ```
