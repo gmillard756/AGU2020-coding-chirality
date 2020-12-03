@@ -265,6 +265,7 @@ Lets start by throwing in some treatment periods to this dataset.
 data$Treatment[ data$sample_dt < as.Date('2013-10-1')  ] <- 1
 data$Treatment[ data$sample_dt >= as.Date('2013-10-1') ] <- 2
 data$Treatment[ data$sample_dt > as.Date('2014-02-28') ] <- 3
+
 interest <- c('DOC', 'SO4', 'THg', 'MeHg')
 ```
 
@@ -274,6 +275,8 @@ We can simplify the column names and change the analyte parameter codes to somet
 simple <- data %>% select(Site=site_no, Date = sample_dt, Time = sample_tm, Analyte=parm_cd, Result = result_va, Treatment)
 
 simple$Analyte <- factor(simple$Analyte, levels = want, labels = interest)
+simple$Treatment <- factor(simple$Treatment, levels = c(1, 2, 3))
+simple$Site <- factor(simple$Site, labels = c('T', 'R'))
 
 wide <- simple %>% spread(key = Analyte, value = Result)
 head(wide)
@@ -281,7 +284,7 @@ head(wide)
 
 we can generate correlations and linear regressions
 
-```{r}
+```{r, warning=F}
 cor(x= wide$DOC, y= wide$THg)
 cor(x= wide$DOC, y= wide$THg, use = 'complete.obs') # default method is a Pearson correlation
 THg_DOC_cor <- cor(x= wide$DOC, y= wide$THg, use = 'complete.obs', method = 'spearman')
@@ -291,8 +294,20 @@ reg1 <- lm(data = wide, THg~DOC)
 reg1
 reg1$residuals
 
+reg2 <- glm(data = wide, THg~DOC, family = 'poisson')
+reg2 <- glm(data = wide, THg~DOC)
+summary(reg2)
+
+
 summary(reg1)
 plot(wide$DOC, wide$THg) 
+
+# independant variables need to be factors!
+
+anova1 <- aov(data=wide, DOC~Site+Treatment+Site*Treatment)
+summary(anova1)
+TukeyHSD(anova1)
+
 ```
 
 ### Python
@@ -303,9 +318,9 @@ from scipy.stats import pearsonr
 from scipy.stats import spearmanr
 
 pywide=r.wide
-s_pywide=pywide.dropna
-s_pywide
-# pearsonr(r.wide.THg, r.wide.DOC)
+s_pywide=pywide.dropna()
+s_pywide.reset_index()
+pearsonr(s_pywide.THg, s_pywide.DOC)
 
 spearmanr(r.wide.THg, r.wide.DOC, nan_policy='omit')
 
@@ -318,10 +333,15 @@ import scipy.stats
 import scipy
 scipy.version.version
 
-scipy.stats.linregress(r.wide.THg, y=r.wide.DOC)
+scipy.stats.linregress(s_pywide.THg, y=s_pywide.DOC)
+scipy.stats.linregress(s_pywide.SO4, s_pywide.DOC)
 
-# linregress(pywide.SO4, pywide.DOC)
-p1=plt.plot(pywide.THg, pywide.DOC)
-plt.show(p1)
+s_pywide.plot.scatter('DOC', 'THg')
+plt.ylabel('Total Mercury')
+plt.show
+
+scipy.stats.f_oneway(s_pywide.THg, s_pywide.Treatment)
 ```
+
+
 
